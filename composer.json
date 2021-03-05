@@ -1,0 +1,21 @@
+{
+    "name": "xtwoend/simple-model",
+    "description": "Simple model for hyperf/db",
+    "type": "library",
+    "require": {
+        "hyperf/db": "^2.1",
+        "hyperf/utils": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Xtwoend\\Model\\": "src/"
+        }
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Abdul Hafidz Anshari",
+            "email": "aditans88@gmail.com"
+        }
+    ]
+}
