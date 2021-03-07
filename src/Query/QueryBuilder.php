@@ -2,6 +2,7 @@
 
 namespace Xtwoend\Model\Query;
 
+use Hyperf\Utils\Collection;
 use Xtwoend\Model\Query\Helper as H;
 use Xtwoend\Model\Event\QueryExecuted;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -1347,15 +1348,21 @@ class QueryBuilder
             throw new \Exception('Invalid $callback argument');
         }
 
+        $this->fetchClass = 'array';
         $offset = 0;
         $limit = $chunkSize;
         $entries = $this->table($this->_table)->get($limit, $offset);
+        
+        $isEmpty = ($entries instanceof Collection)? $entries->isEmpty() : empty($entries);
 
-        while (!empty($entries)) {
+        while (! $isEmpty ) {
+            
             $callback($entries);
 
             $offset += $limit;
             $entries = $this->table($this->_table)->get($limit, $offset);
+           
+            $isEmpty = ($entries instanceof Collection)? $entries->isEmpty() : empty($entries);
         }
     }
 
