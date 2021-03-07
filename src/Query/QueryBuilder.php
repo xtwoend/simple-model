@@ -941,6 +941,17 @@ class QueryBuilder
     }
 
     /**
+     * alias insert
+     *
+     * @param array $data
+     * @return void
+     */
+    public function insertGetId(array $data)
+    {
+        return $this->insert($data);
+    }
+    
+    /**
      * @return int
      * @throws \Exception
      */
@@ -1249,22 +1260,15 @@ class QueryBuilder
     public function query($sql, $values = [])
     {
         $start = microtime(true);
-
-        $this->beforeQuery($sql, $values);
         $this->_lastSql = $sql;
-
         $this->_stmt = $this->_pdo->run(function (\PDO $pdo) use ($sql, $values) {
             $statement = $pdo->prepare($sql);
             $this->bindValues($statement, $values);
             $statement->execute();
             return $statement;
         });
-
-        $this->afterQuery($sql, $values);
         $logHistory = empty($values) ? $sql : array($sql, $values);
-
         $this->putQueryHistory($logHistory);
-
         $this->logQuery(
             $sql,
             $values,
@@ -1312,24 +1316,6 @@ class QueryBuilder
     public static function getQueryHistory()
     {
         return self::$queryHistory;
-    }
-
-    /**
-     * Before query callback
-     * @param $sql
-     * @param array $values
-     */
-    protected function beforeQuery($sql, $values = [])
-    {
-    }
-
-    /**
-     * After query callback
-     * @param $sql
-     * @param array $values
-     */
-    protected function afterQuery($sql, $values = [])
-    {
     }
 
     /**
@@ -1414,33 +1400,6 @@ class QueryBuilder
     }
 
     /**
-     * Binds values
-     * @param array | null $values
-     */
-    private function bindValues(array $values = [])
-    {
-        $this->values = $values;
-
-        foreach ($this->values as $i => &$value) {
-            if (is_string($value)) {
-                $this->_stmt->bindValue($i + 1, $value, \PDO::PARAM_STR);
-            } elseif (is_int($value)) {
-                $this->_stmt->bindValue($i + 1, $value, \PDO::PARAM_INT);
-            } elseif ($value === null) {
-                $this->_stmt->bindValue($i + 1, null, \PDO::PARAM_NULL);
-            } else {
-                if (is_array($value) || $value instanceof \stdClass) {
-                    $value = json_encode($value);
-                } elseif ($value instanceof \DateTime) {
-                    $value = $value->format('Y-m-d H:i:s');
-                }
-
-                $this->_stmt->bindValue($i + 1, $value, \PDO::PARAM_STR);
-            }
-        }
-    }
-
-    /**
      * @return \PDO
      */
     public function pdo()
@@ -1520,6 +1479,18 @@ class QueryBuilder
         }
 
         return $this->table($this->_table)->where($field, $value)->first();
+    }
+
+    /**
+     * check record exists 
+     *
+     * @return void
+     */
+    public function exists(): bool
+    {
+        $sql = $this->toInterpolatedSql();
+        $query = $this->query('SELECT EXISTS(' . $sql . ') as `exists`')->first();
+        return (bool) $query['exists'] ?? false;
     }
 
     /**
